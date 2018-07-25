@@ -53,7 +53,7 @@
     return /(?:\.([^.]+))?$/.exec(filename)[1] || defaultExt;
   }
   
-//真他妈乱
+//入口
   return function createRenderer(resources) {
 
     var cache = (function createCache(mdd) {

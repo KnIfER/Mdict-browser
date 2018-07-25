@@ -73,13 +73,8 @@
   // A shared UTF-16LE text decorder used to read dictionary header string.
   var UTF_16LE = new TextDecoder('utf-16le');
   
-  /**
-   * Return the first argument as result.
-   * This function is used to simulate consequence, i.e. read data and return it, then forward to a new position.
-   * @param any data or function call
-   * @return the first arugment
-   */
-  function conseq(/* args... */) { return arguments[0]; }
+  //conseq
+  function ligat(/* args... */) { return arguments[0]; }
 
   /*
    * Decrypt encrypted data block of keyword index (attrs.Encrypted = "2").
@@ -155,7 +150,7 @@
   function reject(reason) { return Promise.reject(reason); }
   
   /**
-   * Harvest any resolved promises, if all failed then return reasons. 
+   * Harvest any resolved promises, if all failed then return a peasant.
    */
   function harvest(outcomes) {
     return Promise.settle(outcomes).then(function(results) {
@@ -346,16 +341,16 @@
         // MDict file format uses big endian to store number
 
         // 32-bit unsigned int
-        readInt:    function() { return conseq(dv.getUint32(offset, false), this.forward(4)); },
-        readUint16: function() { return conseq(dv.getUint16(offset, false), this.forward(2)); },
-        readUint8:  function() { return conseq(dv.getUint8(offset, false),  this.forward(1)); },
+        readInt:    function() { return ligat(dv.getUint32(offset, false), this.forward(4)); },
+        readUint16: function() { return ligat(dv.getUint16(offset, false), this.forward(2)); },
+        readUint8:  function() { return ligat(dv.getUint8(offset, false),  this.forward(1)); },
 
         // Read a "short" number representing keyword text size, 8-bit for version < 2, 16-bit for version >= 2
         readShort:  function() { return _readShort(this); },
         // Read a number representing offset or data block size, 16-bit for version < 2, 32-bit for version >= 2
         readNum:    function() { return _readNum(this); },
 
-        readUTF16:  function(len) { return conseq(UTF_16LE.decode(new Uint8Array(buf, offset, len)), this.forward(len)); },
+        readUTF16:  function(len) { return ligat(UTF_16LE.decode(new Uint8Array(buf, offset, len)), this.forward(len)); },
 
         // Read data to an Uint8Array and decode it to text with specified encoding.
         // Text length in bytes is determined by searching terminated NUL.
@@ -363,14 +358,14 @@
         readText: function() {
           var len = _searchTextLen(dv, offset);//+1
           //console.log("readText off: ",offset-4)
-          return conseq(_decoder.decode(new Uint8Array(buf, offset, len)), this.forward(len + _bpu));
+          return ligat(_decoder.decode(new Uint8Array(buf, offset, len)), this.forward(len + _bpu));
         },
         // Read data to an Uint8Array and decode it to text with specified encoding.
         // @param len length in basic unit, need to multiply byte per unit to get length in bytes
         // NOTE: After decoding the text, it is need to forward extra "tail" bytes according to specified encoding.
         readTextSized: function(len) {
           len *= _bpu;
-          return conseq(_decoder.decode(new Uint8Array(buf, offset, len)), this.forward(len + _tail));
+          return ligat(_decoder.decode(new Uint8Array(buf, offset, len)), this.forward(len + _tail));
         },
 
         // Skip checksum, just ignore it anyway.
@@ -407,7 +402,7 @@
 
         // Read raw data as Uint8Array from current offset with specified length in bytes
         readRaw: function(len) {
-          return conseq(new Uint8Array(buf, offset, len), this.forward(len === UNDEFINED ? buf.length - offset : len));
+          return ligat(new Uint8Array(buf, offset, len), this.forward(len === UNDEFINED ? buf.length - offset : len));
         },
       };
 
@@ -478,8 +473,8 @@
       // num_blocks===num_blocks of k_b_info(s)===num_blocks of k_b(s)
       for (var i = 0, size; i < keyword_summary.num_blocks; i++) {
         k_b_infoL[i] = {
-          num_entries: conseq(scanner.readNum(), size = scanner.readShort()),
-          first_word:  conseq(scanner.readTextSized(size), size = scanner.readShort()),
+          num_entries: ligat(scanner.readNum(), size = scanner.readShort()),
+          first_word:  ligat(scanner.readTextSized(size), size = scanner.readShort()),
           last_word:   scanner.readTextSized(size),
           comp_size:   size = scanner.readNum(),
           decomp_size: scanner.readNum(),
@@ -627,6 +622,7 @@
      * @return a promise object which will resolve to definition in text. Link to other keyword is followed to get actual definition.
      */
     function findWord(keyinfo) {
+        //console.log("keyinfo: ",keyinfo);
       var block = RECORD_BLOCK_TABLE.find(keyinfo.offset);
       return _slice(block.comp_offset, block.comp_size)
                 .exec(read_definition, block, keyinfo)
@@ -687,7 +683,7 @@
     }
 
     /**
-      * Reduce the array to index of an element which contains or is the nearest one matching a given phrase.
+      * binary find closest
       */
     function shrink(arr, phrase) {
       var len = arr.length, sub;
@@ -706,6 +702,46 @@
         return (arr.pos || 0) + (phrase <= _adaptKey(arr[0]) ? 0 : 1);
       }
     }
+
+      /**
+       * binary find closest with charset(GBK)
+       */
+      function shrink2(arr, phrase) {
+          //console.log("codec1: ",attrs.Encoding);
+          var jeiMa = new TextEncoder(attrs.Encoding, { NONSTANDARD_allowLegacyEncoding: true });
+          //console.log("codec2: ",jeiMa.encode("哈"));
+
+          var len = arr.length, sub;
+          if (len > 1) {
+              len = len >> 1;
+              var key = _adaptKey(arr[len]);
+              if (compareByteArray(jeiMa.encode(key),
+                  jeiMa.encode(_adaptKey(phrase)))>0) {
+                  sub = arr.slice(0, len);
+                  sub.pos = arr.pos;
+              } else {
+                  sub = arr.slice(len);
+                  sub.pos = (arr.pos || 0) + len;
+              }
+              return shrink2(sub, phrase);
+          } else {
+              return (arr.pos || 0) + (phrase <= _adaptKey(arr[0]) ? 0 : 1);
+          }
+      }
+
+      //per-byte byte array comparing
+      function compareByteArray(A,B){
+          var la = A.length,lb = B.length;
+          for(var i=0;i<Math.min(la, lb);i++){
+              var cpr = A[i]-B[i];/*INCONGRUENT*/
+              if(cpr==0)
+                  continue;
+              return cpr;
+          }
+          if(la==lb)
+              return 0;
+          else return la>lb?1:-1;
+      }
 
     /**
      * Load keys for a keyword index object from mdx/mdd file.
@@ -734,15 +770,17 @@
       }
     }
 
-    var residue;
 
-    function popupateEntrys(pos,len){
-        residue=pos;
-            var kdx = posReduce(kBiL, pos);
+
+    function populateEntrys(pos,len){
+            var kdx = posReduce(kBiL, pos)
+            //while(kdx.num_entries_acc>pos && kdx.index>0) kdx = kBiL[kdx.index-1];
+            while(kdx.num_entries_acc+kdx.num_entries-1<pos && kdx.index<kBiL.length-1) kdx = kBiL[kdx.index+1];
+
             //console.log("kdx: ",kdx)
             if (_cached_keys && _cached_keys.pilot === kdx.first_word && _cached_keys.index === kdx.index) {
                 fillIt(kdx.num_entries_acc,pos,len);
-            }else{
+            }else{//TODO: 扩展至银河系尺度
                 slicedKeyBlock.then(function(input) {
                     var scanner = Scanner(input), list = Array(kdx.num_entries);
                     scanner.forward(kdx.offset);
@@ -767,8 +805,11 @@
         var lastSelection=-1;
         if(lastTarget) lastSelection = parseInt(lastTarget.id);
         //console.log("fillIt: blockST:",acc,"fillST:",base,"fillLn:",len);
+        var residue=0;
         for(var i=0;i<len;i++){
             if(base-acc+i>=_cached_keys.list.length){
+                residue=len-i;
+                //console.log("residue: ",residue,acc,base,len,"size: ",base-acc+i,_cached_keys.list.length);
                 break;
             }
             var item = document.createElement('p');
@@ -782,19 +823,43 @@
             }
             lv.appendChild(item);
         }
+        if(residue>0)
+            populateEntrys(base+(len-residue),residue);
     }
 
-    function getEntryListAt(pos,len){
-        var kdx = posReduce(kBiL, pos);
-        return loadKeys(kdx).then(function (list) {
-            var xxx = [];
-            for(var i=0;i<len;i++){
-                xxx.push(list[pos-kdx.num_entries_acc]);
-            }
-            return xxx;
-        });
-    }
+      function renderDef(pos){
+              var kdx = posReduce(kBiL, pos);
+              if (_cached_keys && _cached_keys.pilot === kdx.first_word && _cached_keys.index === kdx.index) {
+                  //$(".def").html(_cached_keys.list[pos-kdx.num_entries_acc]);
+                  fillet(_cached_keys.list[pos-kdx.num_entries_acc]);
+              }else{
+                  slicedKeyBlock.then(function(input) {
+                      var scanner = Scanner(input), list = Array(kdx.num_entries);
+                      scanner.forward(kdx.offset);
+                      //console.log("kdx.offset: ",kdx.offset);
+                      scanner = scanner.readBlock(kdx.comp_size, kdx.decomp_size);
 
+                      for (var i = 0; i < kdx.num_entries; i++) {
+                          var offset = scanner.readNum();
+                          list[i] = new Object(scanner.readText());
+                          list[i].offset = offset;
+                          if (i > 0) {
+                              list[i - 1].size = offset - list[i - 1].offset;
+                          }
+                      }
+                      _cached_keys = {list: list, index: kdx.index, pilot:kdx.first_word};
+                      //$(".def").html(_cached_keys.list[pos-kdx.num_entries_acc]);
+                      fillet(_cached_keys.list[pos-kdx.num_entries_acc]);
+
+                  });
+              }
+      }
+
+      function fillet(Kingfo){
+          findWord(Kingfo).then(function (def) {
+              $(".def").html(def);
+          })
+      }
     /**
      * Search for the first keyword match given phrase.
      */
@@ -809,13 +874,18 @@
           if (_adaptKey(prev.last_word) !== _adaptKey(kdx.last_word)) {
             break;
           }
+          console.log("真的欸！！");
           kdx = prev;
           index--;
         }
       }
 
       return loadKeys(kdx).then(function (list) {
-          var idx = shrink(list, phrase);
+          var idx;
+          if(attrs.Encoding === "GBK")
+                idx = shrink2(list, phrase);
+          else
+                idx = shrink(list, phrase);
           // look back for the first matched keyword position
           while (idx > 0) {
             if (_adaptKey(list[--idx]) !== _adaptKey(phrase)) {
@@ -849,17 +919,18 @@
           var word = query.trim().toLowerCase(), offset = query.offset;
 
           return seekVanguard(word).spread(function(kdx, idx, list) {
-            console.log("mdx: "+kdx);
-            console.log(kdx);
-            console.log("mdx: "+idx);
-            console.log("mdx: "+list);
-            list = list.slice(idx);
-            if (offset !== UNDEFINED) {
-              list = matchOffset(list, offset);
-            } else {
-              list = list.filter(function(el) { return el.toLowerCase() === word; });
-            }
-            return harvest(list.map(findWord));
+            //console.log("mdx: "+kdx);
+            //console.log(kdx);
+            //console.log("mdx: "+idx);
+            //console.log("mdx: "+list); //this is list of Kingfo with offset and size
+
+            var candidate = kdx.num_entries_acc + idx;
+            var perfectM = false;
+            if(_adaptKey(list[idx]) == _adaptKey(word))
+                perfectM=true;
+            //console.log("compare: ",_adaptKey(list[idx]),_adaptKey(word),perfectM);
+            //return harvest(list.map(findWord));
+              return [candidate,perfectM];
           });
       },
 
@@ -941,7 +1012,8 @@
       common.log('\n\n-- parse done --', file.name,"\n\n\n");
       // resolve and return lookup() function according to file extension (mdx/mdd)
       LOOKUP[ext].description = attrs.Description;//略感恶心!!!
-        LOOKUP[ext].popupateEntrys = popupateEntrys;
+        LOOKUP[ext].populateEntrys = populateEntrys;
+        LOOKUP[ext].renderDef = renderDef;
       return resolve(LOOKUP[ext]);
     });
   };

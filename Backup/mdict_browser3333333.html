@@ -11,18 +11,18 @@ based on: mdict-js
   <script>
       window.TextEncoder = window.TextDecoder = null;
   </script>
-  <script src="MdbR/lib/encoding-indexes.js"></script>
-  <script src="MdbR/lib/encoding.js"></script>
+  <script src="lib/encoding-indexes.js"></script>
+  <script src="lib/encoding.js"></script>
   <!--script src="require.js"></script-->
   <!--      破逼乎,关我提问,吃枣药丸></script-->
   <!--      scrap bit-hoo,shut down my question,you go and frrrrrak your ceo's mother's daughter's son></script-->
-  <script src="MdbR/jquery-1.11.3.min.js"></script>
-  <script src="MdbR/listview/jquery.mousewheel.js"></script>
-  <script src="MdbR/listview/seekbar.js"></script>
-  <script src="MdbR/minilzo-decompress.js"></script>
-  <script src="MdbR/murmurhash3.js"></script>
+  <script src="jquery-1.11.3.min.js"></script>
+  <script src="listview/jquery.mousewheel.js"></script>
+  <script src="listview/seekbar.js"></script>
+  <script src="minilzo-decompress.js"></script>
+  <script src="murmurhash3.js"></script>
 
-  <link rel="stylesheet" type="text/css" href="MdbR/css/seekbar.css"/>
+  <link rel="stylesheet" type="text/css" href="css/seekbar.css"/>
   <style>
     p{
       font-size: 16px;
@@ -34,7 +34,6 @@ based on: mdict-js
     }
     .cp:hover
     {
-      background-color: #BBE8F2;
       background-color:#397CCD;
     }
     html, body {
@@ -58,26 +57,24 @@ based on: mdict-js
       margin-left: 195px;
       padding: 0;
     }
-    .navR {
-      height: 100px;
-      width: 100%;
-      background-color: rgba(67, 163, 255, 0.65);
-    }
-    .def {
-      position:absolute;
-      top: 0px;
-      bottom: 0px;
-      margin-top:100px;
-      padding:4px 4px 0 4px;
-      overflow:scroll;
-      background-color: #B3E5EE;
-      width: 100%;	/*NO!!!height: 100%;!!!*/
-    }
+      .navR {
+        height: 100px;
+        width: 100%;
+        background-color: #BBE8F2;
+      }
+      .def {
+        position:absolute;
+        top: 0px;
+        bottom: 0px;
+        margin-top:100px;
+        padding-left:2px;
+        overflow:scroll;
+        background: #29AAE1;
+        width: 100%;	/*NO!!!height: 100%;!!!*/
+      }
 
-    #fileBtn{
-      position: absolute; top: 72px; left: 200px;
-      border-radius: 30%;
-      color: white;
+    #dictfile{
+      position: absolute; top: 76px; left: 200px;
       z-index: 1;
     }
     #lv {
@@ -86,8 +83,6 @@ based on: mdict-js
       float:left;
       color: #dddddd;
       overflow: hidden;
-      overflow-x:scroll;
-      white-space:nowrap;
       padding: 0px;
       padding-top:16px;
       margin:0;
@@ -180,7 +175,7 @@ based on: mdict-js
           //}
           //if(couterfeitCounter>listSize) couterfeitCounter = listSize;
           if(pos+capacity>listSize) capacity = listSize-pos;
-          if(currentDict)currentDict.populateEntrys(pos,capacity);
+          if(currentDict)currentDict.popupateEntrys(pos,capacity);
           else
               for (var i=0; i<capacity; i++){
                   var item = document.createElement('p');
@@ -250,7 +245,6 @@ based on: mdict-js
       }
 
       function setListPos(p){
-          console.log("list pos is: ",listSize-p);
           seekBarmy.setValue(listSize-p);
           pos=p;
           seekBarmy.render();
@@ -272,17 +266,12 @@ based on: mdict-js
           var word = editText.value;
           //console.log(word);
           if(currentDict){
-              currentDict(word).then(function (res){//[idx,isPerfect]) {
+              currentDict(word).then(function ([idx,isPerfect]) {
                   //console.log("\n\nlookUp: ",idx);
-                  if(res[1]){
-                      //coin history!
-                      lastTarget = document.createElement('p');
-                      lastTarget.id = res[0];
-                  }
-                  setListPos(res[0]);
-                  if(res[1]){
+                  setListPos(idx);
+                  if(isPerfect){
                       //console.log("isPerfectisPerfectisPerfect");
-                      currentDict.renderDef(res[0]);
+                      currentDict.renderDef(idx);
                   }
 
               });
@@ -328,28 +317,25 @@ based on: mdict-js
 <div class="parentR">
   <div class="navR">Top Layout</div>
   <div class="def" id="myFrame" ></div>
-</div>
+  </div>
 
-<div class="top_bar">
-  <input id="word" type="text" value="" >
-  <!--input id="搜索按钮" type="button" value="查" onclick="btnAction()"-->
-</div>
+  <div class="top_bar">
+    <input id="word" type="text" value="" >
+    <!--input id="搜索按钮" type="button" value="查" onclick="btnAction()"-->
+  </div>
 
-<div class="ListView">
-  <p id="lv"> </p>
-  <p id="seekbar_container" ></p>
-</div>
+  <div class="ListView">
+    <p id="lv"> </p>
+    <p id="seekbar_container" ></p>
+  </div>
 
-<!--div class="def">
-</div-->
+  <!--div class="def">
+  </div-->
 
+  <input id="dictfile" type="file" multiple=>
 
-<input type='button' id="fileBtn" value='+'  OnClick='javascript:$("#dictfile").click();'/>
-<input id='dictfile' type='file' multiple=/>
-
-
-<script type="text/javascript" src="MdbR/conf.js"></script>
-<script src="MdbR/require.js" data-main="MdbR/mdict"></script>
+  <script type="text/javascript" src="conf.js"></script>
+  <script src="require.js" data-main="mdict"></script>
 
 </body>
 </html>

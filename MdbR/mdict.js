@@ -32,7 +32,11 @@ require(['jquery', 'mdict-common', 'mdict-parser', 'mdict-renderer', 'selectize'
             //console.log(mdicts["mdd"]);
             //console.log(mdicts["mdx"].then(function(lookup){return lookup("happy")}));//真他妈有趣啊!
             //console.log(mdicts[0].then(function(lookup){return lookup("happy")}));//真他妈有趣啊!
-            //console.log(mdicts[0].value()("happy"));//真他妈有趣啊!
+            //console.log("!!!",mdicts[0].value()("happy"));//真他妈有趣啊!
+            mdicts[0].value()("happy").then(function (definitions){
+                console.log(definitions);
+            });//真他妈有趣啊!
+
           var mdict = MRenderer(mdicts);
 
           function doSearch(phrase, offset) {
