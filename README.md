@@ -1,6 +1,5 @@
 # Mdict-browser
 [<b>DEMO<b>](https://knifer.github.io/Mdict-browser/)  
-<br />
   
 ![image](https://github.com/KnIfER/Mdict-browser/raw/master/MdbR/MdbR.png)  
 <br />
