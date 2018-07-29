@@ -4,5 +4,5 @@
   
 ![image](https://github.com/KnIfER/Mdict-browser/raw/master/MdbR/MdbR.png)  
 
-<b>Please worship my pre-eminent design! </b>
+<b>Please worship my pre-eminent page design! </b>
 ![image](https://github.com/KnIfER/Mdict-browser/raw/master/screenshot/1.png)
