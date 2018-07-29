@@ -1,4 +1,2 @@
 # Mdict-browser
-# 未完成
-# 2018.7.24列表绑定完成.
-# 2018.7.25基础搜索逻辑完成,进一步搭建UI.
+[DEMO](https://knifer.github.io/Mdict-browser/)
