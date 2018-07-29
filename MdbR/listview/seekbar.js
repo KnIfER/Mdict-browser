@@ -63,6 +63,12 @@ $.extend(Seekbar.Seekbar.prototype, {
 
     valueListener: undefined,
 
+    refresh: function(){
+        this.area.width = this.el.width();
+        this.area.height = this.el.height();
+        this.area.size = Math.max(this.area.width, this.area.height);
+        this.positionItems();
+    },
 
     render: function () {
         //console.log(this.renderTo.selector);

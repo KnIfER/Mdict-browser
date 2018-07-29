@@ -645,13 +645,11 @@
     //------------------------------------------------------------------------------------------------
     // Implementation for look-up
     //------------------------------------------------------------------------------------------------
-    var slicedKeyBlock,
-        _cached_keys,             // cache latest keys
-        _trail,                   // store latest visited record block & position when search for candidate keys
-        mutual_ticket = 0;        // a oneway increased ticket used to cancel unfinished pattern match
+    //xxx cache
+      var slicedKeyBlock,
+          mutual_ticket = 0;        // a oneway increased ticket used to cancel unfinished pattern match
 
-
-    /**
+      /**
      *  二分查找，这写法厉害了！
       * Reduce the key index array to an element which contains or is the nearest one matching a given phrase.
       */
@@ -779,9 +777,11 @@
 
             //console.log("kdx: ",kdx)
             if (_cached_keys && _cached_keys.pilot === kdx.first_word && _cached_keys.index === kdx.index) {
+                //console.log("_cached_keys reused"+_cached_keys,_cached_keys);
                 fillIt(kdx.num_entries_acc,pos,len);
             }else{//TODO: 扩展至银河系尺度
                 slicedKeyBlock.then(function(input) {
+                    //console.log("retrieving _cached_keys");
                     var scanner = Scanner(input), list = Array(kdx.num_entries);
                     scanner.forward(kdx.offset);
                     //console.log("kdx.offset: ",kdx.offset);
@@ -795,6 +795,7 @@
                             list[i - 1].size = offset - list[i - 1].offset;
                         }
                     }
+                    if(_cached_keys)_cached_keys.list.splice(0,_cached_keys.list.length);
                     _cached_keys = {list: list, index: kdx.index, pilot:kdx.first_word};
                     fillIt(kdx.num_entries_acc,pos,len);
                 });
@@ -804,6 +805,7 @@
     function fillIt(acc,base,len){
         var lastSelection=-1;
         if(lastTarget) lastSelection = parseInt(lastTarget.id);
+        else if(lastSelection_!=-1) lastSelection=lastSelection_;
         //console.log("fillIt: blockST:",acc,"fillST:",base,"fillLn:",len);
         var residue=0;
         for(var i=0;i<len;i++){
@@ -825,6 +827,7 @@
         }
         if(residue>0)
             populateEntrys(base+(len-residue),residue);
+        lastSelection_=-1;
     }
 
       function renderDef(pos){
@@ -857,6 +860,7 @@
 
       function fillet(Kingfo){
           findWord(Kingfo).then(function (def) {
+              document.getElementById("defP").scrollTop=0;
               $(".def").html(def);
           })
       }
@@ -973,7 +977,7 @@
       common.log("【1】keyword_summary:"+keyword_summary);
       common.log(keyword_summary);
         common.log('\n\n--fake  parse done --', file.name,"\n\n\n");
-        LOOKUP[ext]._num_entries = keyword_summary.num_entries;//略感恶心!!!
+        LOOKUP[ext]._num_entries = keyword_summary.num_entries;//sick!!!
 
       pos += keyword_summary.len;                 // start of key block
         common.log("start of keyword info: ",pos);
@@ -1011,9 +1015,10 @@
     }).spread(function() {
       common.log('\n\n-- parse done --', file.name,"\n\n\n");
       // resolve and return lookup() function according to file extension (mdx/mdd)
-      LOOKUP[ext].description = attrs.Description;//略感恶心!!!
+      LOOKUP[ext].description = attrs.Description;//sick!!!
         LOOKUP[ext].populateEntrys = populateEntrys;
         LOOKUP[ext].renderDef = renderDef;
+        LOOKUP[ext].filename = file.name;
       return resolve(LOOKUP[ext]);
     });
   };
